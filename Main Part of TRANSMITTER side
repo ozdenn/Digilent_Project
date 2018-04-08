@@ -1,0 +1,168 @@
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity main is
+    Port ( clk,sw : in  STD_LOGIC;
+           reset : in  STD_LOGIC;
+           hsync : out  STD_LOGIC;
+           vsync : out  STD_LOGIC;
+			  address_observe:OUT STD_LOGIC_VECTOR (12 downto 0);
+           VGA_out_red : out  std_logic_vector(3 downto 0);
+           VGA_out_green : out  std_logic_vector(3 downto 0);
+           VGA_out_blue : out  std_logic_vector(3 downto 0);
+			  T_Done : out std_logic;
+			  --Transmitter--
+			  button : in std_logic;
+			  R_ACK  : in std_logic;
+			  Csel   : out std_logic;
+			  clk_ext: out std_logic;
+			  LED    :out std_logic_vector(2 downto 0);
+			  adress   : out std_logic_vector  (12 downto 0);
+		     data     : in std_logic_vector  (2 downto 0);
+--           counter : out std_logic_vector  (3 downto 0);
+			  Txd     : out std_logic
+			  );
+end main;
+
+architecture Behavioral of main is
+
+
+signal q			   :  STD_LOGIC_VECTOR (27 downto 0) := (others => '0');
+signal clk_count  : std_logic;
+signal clk_25     : STD_LOGIC;
+signal rows     	: STD_LOGIC_VECTOR (9 downto 0);
+signal cols     	: STD_LOGIC_VECTOR (9 downto 0);
+signal datamem  	: STD_LOGIC_VECTOR (2 downto 0);
+signal enormal  	: std_logic;
+signal address  	: STD_LOGIC_VECTOR (12 downto 0);
+signal dataread 	: STD_LOGIC_VECTOR (2 downto 0);
+signal dataencryp : STD_LOGIC_VECTOR (2 downto 0);
+signal colors     : STD_LOGIC_VECTOR (2 downto 0);
+signal eencryp  	: std_logic;
+
+COMPONENT Transmitter is
+	PORT(
+		CLK,reset,sw : IN std_logic;
+		clk_ext : IN std_logic;
+		R_ACK  : in std_logic;
+		button : IN std_logic;         
+		TXD : OUT std_logic;
+		CSel : OUT std_logic;
+		LED : OUT std_logic_vector(2 downto 0);
+		adress: OUT std_logic_vector(12 downto 0);
+		data : in std_logic_vector(2 downto 0);
+		T_Done : out std_logic
+		);
+END COMPONENT;
+
+component reader is
+    Port ( clk, reset : in  STD_LOGIC;
+           row : in  STD_LOGIC_VECTOR (9 downto 0);
+           col : in  STD_LOGIC_VECTOR (9 downto 0);
+           addr : out  STD_LOGIC_VECTOR (12 downto 0);
+           ennormal , enencryp: out std_logic;
+			  datain : in  STD_LOGIC_VECTOR (2 downto 0);
+			  dataout : out  STD_LOGIC_VECTOR (2 downto 0));
+end component;
+
+component vga_controller is
+    Port ( clk : in  STD_LOGIC;
+           reset : in  STD_LOGIC;
+			  VGA_in_red : in std_logic_vector(3 downto 0);
+			  VGA_in_green : in std_logic_vector(3 downto 0);
+			  VGA_in_blue : in std_logic_vector(3 downto 0);
+           col : out  STD_LOGIC_VECTOR (9 downto 0);
+           row : out  STD_LOGIC_VECTOR (9 downto 0);
+			  VGA_out_red : out std_logic_vector(3 downto 0);
+			  VGA_out_green : out std_logic_vector(3 downto 0);
+			  VGA_out_blue : out std_logic_vector(3 downto 0);
+           hsync : out  STD_LOGIC;
+           vsync : out  STD_LOGIC);
+
+end component;
+
+COMPONENT image_memory
+  PORT (
+    a : IN STD_LOGIC_VECTOR(12 DOWNTO 0);
+--    d : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+--    clk : IN STD_LOGIC;
+--    we : IN STD_LOGIC;
+    spo : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
+  );
+END COMPONENT;
+
+
+begin
+address_observe <= address;
+u0: reader
+    Port map ( clk      => q(1),
+	            reset    => reset,
+               row      => rows,
+               col      => cols,
+               addr     => address,
+               ennormal => enormal,
+					enencryp => eencryp,
+			      datain   => datamem,
+			      dataout  => colors);
+					
+					
+CLK_EXT <= clk;--Q(0);
+					
+Inst_Transmitter: Transmitter PORT MAP(
+		CLK => clk,
+		TXD => TxD,
+		reset=>reset,
+		clk_ext => clk,--Q(0),
+		CSel => Csel,
+		LED => LED,
+		adress => adress,
+		data =>datamem, --data,
+----		counter => counter, 
+		R_ACK => R_ACK,
+		button => button,
+		T_Done=> T_Done,
+		sw=>sw	
+	);
+
+
+VGA_CONTROLLER_1: vga_controller
+    Port map ( clk                       => q(1),
+					reset                     => reset,
+					VGA_in_red (0)            => colors (2),
+					VGA_in_red (3 downto 1)   => "000",
+					VGA_in_green (0)          => colors (1),
+					VGA_in_green (3 downto 1) => "000",
+					VGA_in_blue (0)           => colors (0),
+					VGA_in_blue (3 downto 1)  => "000",
+					col                       => cols,
+					row                       => rows,
+					VGA_out_red               => VGA_out_red,
+					VGA_out_green             => VGA_out_green,
+					VGA_out_blue              => VGA_out_blue,
+					hsync                     => hsync,
+					vsync                     => vsync);
+					
+
+
+u2: image_memory
+	port map ( a => address,
+--				  d => "000",
+--				  clk => q(1),
+--				  we => '0',
+				  spo => datamem);
+				  
+				  
+	
+				  
+	clock_divider:PROCESS(clk)
+   BEGIN
+		IF clk'EVENT AND clk= '1' then 
+		q <= q + 1 ;
+		end if;
+		end process clock_divider;
+
+end Behavioral;
+
