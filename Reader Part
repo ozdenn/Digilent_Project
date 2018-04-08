@@ -1,0 +1,99 @@
+----------------------------------------------------------------------------------
+-- File Name: reader.vhd
+----------------------------------------------------------------------------------
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+
+entity reader is
+    Port ( clk, reset : in  STD_LOGIC;
+           row : in  STD_LOGIC_VECTOR (9 downto 0);
+           col : in  STD_LOGIC_VECTOR (9 downto 0);
+           addr : out  STD_LOGIC_VECTOR (12 downto 0);
+           ennormal,enencryp : out std_logic;
+			  ledreader : out std_logic_vector(2 downto 0);
+			  datain : in  STD_LOGIC_VECTOR (2 downto 0);
+			  dataout : out  STD_LOGIC_VECTOR (2 downto 0));
+end reader;
+
+architecture Behavioral of reader is
+
+	constant vtop : integer := 1;
+	constant vbottom : integer := 64;
+		constant htop1 : integer := 1;
+	constant hbottom1 : integer := 96;
+--	constant htop1 : integer := 64;
+--	constant hbottom1 : integer := 154;
+
+--
+	signal addr_normal : STD_LOGIC_VECTOR (12 downto 0) := (others => '1');
+	signal addr_encryp : STD_LOGIC_VECTOR (12 downto 0) := (others => '0');
+	signal q :  STD_LOGIC_VECTOR (23 downto 0) := (others => '0');
+	signal en_normal : std_logic := '0';
+--	signal en_encryp : std_logic := '0';
+
+begin
+
+
+--reset<='0';
+
+
+	ens : process (clk, reset)
+	begin
+		if reset = '1' then
+		en_normal <= '0';
+		
+		elsif clk'event and clk='1' then
+			
+				if (row >= vtop-1) and (row <= vbottom-1) then
+					
+					if (col >= htop1-1) and (col <= hbottom1-1) then
+							en_normal <= '1';
+--							
+					else
+							en_normal <= '0';
+					end if;
+					
+				else
+						en_normal <= '0';
+				end if;
+				
+		end if;
+		
+	end process ens;
+	
+	c_normal: process (clk, reset)
+	variable address_index : integer range 0 to 6500:=0;
+	begin
+			if reset = '1' then
+					address_index	:= 0;
+				
+				
+			elsif clk'event and clk='1' then
+			
+				if en_normal = '1' then
+				
+					if ( address_index < 6143) then
+					   addr_normal <= conv_std_logic_vector(address_index,13);
+						address_index := address_index + 1;
+					else 
+							address_index := 0;
+							addr_normal <= conv_std_logic_vector(address_index,13);
+					end if;
+
+				end if;
+			end if;
+	end process c_normal;
+--	
+
+	
+	addr <= addr_normal;
+	ledreader <= datain;
+	dataout <= datain;
+	ennormal <= en_normal;
+
+
+end Behavioral;
