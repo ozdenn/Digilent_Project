@@ -1,0 +1,41 @@
+
+Net "clk" LOC=V10 | IOSTANDARD=LVCMOS33;
+Net "clk" TNM_NET = sys_clk_pin;
+
+#NET "reset" LOC = "B8";
+
+
+NET VGA_out_red<0>  LOC = U7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L43P, Sch name = RED0
+#NET vgaRed<1> LOC = V7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L43N, Sch name = RED1
+#NET vgaRed<2> LOC = N7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L44P, Sch name = RED2
+NET VGA_out_green<0>  LOC = P8 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L44N, Sch name = GRN0
+#NET vgaGreen<1> LOC = T6 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L45P, Sch name = GRN1
+#NET vgaGreen<2> LOC = V6 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L45N, Sch name = GRN2
+NET VGA_out_blue<0>  LOC = R7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L46P, Sch name = BLU1
+#NET vgaBlue<2> LOC = T7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L46N, Sch name = BLU2
+
+NET "hsync" LOC = N6 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L47P, Sch name = HSYNC
+NET "vsync" LOC = P7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L47N, Sch name = VSYNC
+
+#Receiver
+Net "RxD" LOC = T12; #Bank = 2, pin name = IO_L19P, Sch name = JA1
+Net "transmitter_ck" LOC = V12; #Bank = 2, pin name = IO_L19N, Sch name = JA2
+NET "transmitter_ck" CLOCK_DEDICATED_ROUTE = FALSE; 
+Net "Chsel" LOC = N10  | IOSTANDARD = LVCMOS33;
+Net "T_Done" LOC = P11 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L20N, Sch name = JA4
+Net "R_ACK" LOC = N9 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L22N, Sch name = JA8
+#Net "LED" LOC=T11 | IOSTANDARD = LVCMOS33;
+
+
+#Net "Led" LOC = U16 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2P_CMPCLK, Sch name = LD0
+Net "Led<0>" LOC = V16 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
+Net "Led<1>" LOC = U15 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
+Net "Led<2>" LOC = V15 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
+Net "Led<3>" LOC = M11 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
+
+Net "ledreader<0>" LOC = N11 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
+Net "ledreader<1>" LOC = R11 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
+Net "ledreader<2>" LOC = T11 |  IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
+
+
+
