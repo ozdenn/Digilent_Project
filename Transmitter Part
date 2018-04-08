@@ -1,0 +1,119 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    13:04:54 02/05/2018 
+-- Design Name: 
+-- Module Name:    Rx - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Rx is
+ Port (    CLK : in std_logic;
+           RxD : in std_logic;
+			  transmitter_ck: in std_logic;
+			  adress : out std_logic_vector (12 downto 0);
+			  Data   : inout std_logic_vector (2 downto 0);
+			  reset  : out std_logic;
+			  ChSel: in std_logic;
+			  T_Done :in std_logic;
+			  LED : out std_logic_vector( 3 downto 0);
+			  rx_done : inout std_logic;
+			  R_ACK : inout std_logic		 
+			 
+			  
+			  );
+end Rx;
+
+architecture Behavioral of Rx is
+ Type State is (idle,Receive,Done,abc,Receive1);
+    Signal CS : state := idle;
+--    Signal Data : Std_logic_vector (33120 downto 0);
+	 signal clk_counter : STD_LOGIC_VECTOR(27 downto 0);  
+
+begin
+
+ LED (2 downto 0) <= Data;
+ LED (3) <= '0'; --R_ACK;
+ 
+Process (transmitter_ck)
+Variable i : integer Range 4 downto 0 := 0;
+Variable counter : integer range 256 downto 0:=0;
+variable count   : integer range 6144 downto 0:=0;
+variable a : integer range 6144 downto 0:=0;
+Begin 
+if(transmitter_ck'event and transmitter_ck = '0') then
+    Case CS is      
+		When idle =>
+            if (ChSel = '1' ) then --AND RxD = '0'
+				    reset <= '0'; --1	
+                i := 0;					 
+                CS <= Receive;	
+					 rx_done <='0';
+				
+            else 				
+				reset <= '0';
+
+			end if;	
+				
+        When Receive => 		     
+				if(i>=0 and i<3) then
+					Data(2-i) <= RxD;
+					i := i +1;
+					CS <=Receive;
+				else				   
+					i:=0;					
+					CS <= Done;
+				end if;	           
+				  
+		 When Done =>
+				 if (count < 6144) then
+				      adress<= conv_std_logic_vector(count,13);
+						count := count +1;
+                  R_ACK <= '1';						
+					   CS <= idle;	
+				 else						
+						count :=0;						
+						reset <= '0';
+						CS <= abc;--Done;
+				 end if;
+				 
+				 when abc =>
+				    rx_done <='1';
+
+			
+					  			  
+				  
+          when others => 
+		 --Data(7) <= RxD;    
+        end case;
+      end if;                    
+end process;   
+
+
+
+end Behavioral;
+
