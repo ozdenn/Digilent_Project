@@ -1,0 +1,120 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Transmitter is
+Port (   CLK ,reset,sw  : in std_logic;
+         TXD   : out std_logic; --gönderdiğim data bit bit
+			clk_ext  : in std_logic; --receiver clock senkron olması için
+			CSel  : out std_logic; -- göndermenin bittiğini göstermek için(bitince LED yanıyor)
+			button: in std_logic; --göndermeyi başlatmak için buton
+			--seven segment --
+			LED     : out std_logic_vector  (2 downto 0);
+			R_ACK  : in std_logic;
+			adress: out std_logic_vector(12 downto 0);
+			data  : in std_logic_vector(2 downto 0);
+			T_Done : out std_logic
+				  );
+end Transmitter;
+
+architecture Behavioral of Transmitter is
+
+    type state is (idle, send_3bit_data, read_data, done,Waitt); 
+    Signal CS : state := idle;--send_bit;
+--    signal Send : std_logic_vector (2 downto 0):="000"; --4 downto 0  -- '1' ve '0' receiver initiliaze etmek için
+--	 signal total : std_logic_vector (2 downto 0):="000";--data 				-- 3bitlikte data yolluyorum 3+2=5	
+	 signal sw_int : integer range 0 to 255 := 0;
+	  signal total : std_logic_vector (2 downto 0):="000";--data 
+	 signal flag : std_logic :='0';
+   
+	begin
+	
+
+--	 Send <= '1' & total & '0'; --0  ve 1  receiver initialize etmek için;
+--	 total <= digit;
+--    Send <=  total ;--& '0'; --0  ve 1  receiver initialize etmek için;
+--	 total <= data;
+	 LED <=data;   --send(9 downto 2);-- 
+--	 digit <=total;  
+	 
+process (clk_ext) 
+variable counter  : integer range 6144 downto  0:=0;  
+variable i 			:integer range 5 downto  0:=0;  
+
+begin	
+	if ( reset = '1') then
+	  i:=0;
+	  CSel <= '0';
+	  T_Done <= '0';
+elsif (clk_ext'event and clk_ext='1' ) then 		
+  Case CS is 	  
+        When idle =>
+			  if ( button ='1') then
+   		   i:=0;
+				CSel <='1';
+				CS <= read_data;--button 1'se resmin datalarını okumaya gdiyor		
+			  else 
+				CSel <='1';	 -- değilse TxD hep 0 yolluyor
+				TxD  <='0';
+				CS <= idle;				
+			end if;
+				
+		 When send_3bit_data =>                    			             
+			if (i>=0 and i<3) then	
+             CSel <='1';			
+				 TxD <= data(2-i); 
+				 i := i + 1;  
+			  else
+				 	
+				 i:=0;
+				 CS <= Waitt;
+			 end if;	          
+      			 
+				
+      When read_data =>              
+	       if ( counter < 6144) then -- adress sayım bitti mi kontrol et --10800
+			 counter:= counter +1 ;
+			 adress <= conv_std_logic_vector(counter,13);
+          CS <= send_3bit_data;			 -- 3 biti okudktan sonra adress değiştirme
+			 else 
+			 CSel <='0';
+			 counter :=0;
+			 CS <= done;
+			 end if;		
+             		 
+			 				
+		When done =>		
+		   CSel <= '0';
+         T_Done <= '1';			
+			if ( button='1') then
+				  CS   <=idle;
+		   else
+				  CS   <=done;
+			end if;
+		
+    When Waitt =>	
+         if ( R_ACK = '1') then
+           CS <= read_data;
+         else 
+           CS <= Waitt;
+		end if;
+			
+			
+			
+       when others =>    
+end case;	
+end if;
+end process;
+end Behavioral;
+
+
